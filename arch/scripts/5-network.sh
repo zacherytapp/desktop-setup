@@ -14,7 +14,7 @@ EOF
 
   sudo systemctl enable --now NetworkManager
 
-  sudo sed -i \;
+  sudo sed -i \
     -e "/^#PermitRootLogin prohibit-password$/a PermitRootLogin no" \
     -e "/^#Port 22$/i Protocol 2" \
     /etc/ssh/sshd_config
@@ -36,29 +36,3 @@ function install_discovery {
   sudo systemctl enable avahi-daemon.service
   sudo systemctl start avahi-daemon.service
 }
-
-function install_firewall {
-
-  sudo ufw default deny
-
-  if pacman -Qi syncthing > /dev/null 2>&1; then
-    sudo ufw allow syncthing
-    sudo ufw allow syncthing-gui
-  fi
-
-  if pacman -Qi kdeconnect > /dev/null 2>&1; then
-    sudo ufw allow 'KDE Connect'
-  fi
-
-  if pacman -Qi transmission-cli > /dev/null 2>&1; then
-    sudo ufw allow Transmission
-  elif pacman -Qi transmission-qt > /dev/null 2>&1; then
-    sudo ufw allow Transmission
-  elif pacman -Qi transmission-gtk > /dev/null 2>&1; then
-    sudo ufw allow Transmission
-  fi
-
-  sudo ufw enable
-  sudo systemctl enable ufw
-}
-

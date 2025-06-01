@@ -44,15 +44,12 @@ function enable_multilib {
 
 function configure_flatpak {
   sudo pacman -S flatpak
-  sudo flatpak override --system --nosocket=x11 --nosocket=fallback-x11 --nosocket=pulseaudio --nosocket=session-bus --nosocket=system-bus --unshare=network --unshare=ipc --nofilesystem=host:reset --nodevice=input --nodevice=shm --nodevice=all --no-talk-name=org.freedesktop.Flatpak --no-talk-name=org.freedesktop.systemd1 --no-talk-name=ca.desrt.dconf --no-talk-name=org.gnome.Shell.Extensions
-  flatpak override --user --nosocket=x11 --nosocket=fallback-x11 --nosocket=pulseaudio --nosocket=session-bus --nosocket=system-bus --unshare=network --unshare=ipc --nofilesystem=host:reset --nodevice=input --nodevice=shm --nodevice=all --no-talk-name=org.freedesktop.Flatpak --no-talk-name=org.freedesktop.systemd1 --no-talk-name=ca.desrt.dconf --no-talk-name=org.gnome.Shell.Extensions
-  flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
   flatpak update
 
   for pak in "${FLATPAKS[@]}"; do
     if ! flatpak list | grep -i "$pak" &>/dev/null; then
       print_info "installing flatpak: $pak"
-      flatpak install --noninteractive --user flathub "$pak"
+      flatpak install --noninteractive flathub "$pak"
     else
       echo "Flatpak already installed: $pak"
     fi
@@ -65,7 +62,7 @@ function enable_services {
   sudo systemctl enable NetworkManager --now && sudo systemctl start NetworkManager
   sudo systemctl enable systemd-networkd --now && sudo systemctl start systemd-networkd
   # sudo systemctl enable bluetooth.service --now && sudo systemctl start bluetooth.service
-  # sudo systemctl enable sshd --now && sudo systemctl start sshd
+  sudo systemctl enable sshd --now && sudo systemctl start sshd
 }
 
 function install_tpm {
@@ -77,30 +74,6 @@ function install_tpm {
     echo "Installing Tmux Plugin Manager (TPM)..."
     git clone https://github.com/tmux-plugins/tpm $TPM_DIR
   fi
-}
-
-function install_kvm {
-  local libvirtlocaldir="${ACTUAL_HOME}/.local/libvirt"
-  local nsconf="/etc/nsswitch.conf"
-  local libvirtnetworkconf="/etc/libvirt/network.conf"
-
-  print_info "Adding $(whoami) to libvirt group."
-  sudo usermod -aG libvirt "$(whoami)"
-
-  print_info "Creating local libvirt directories."
-  mkdir -p "${libvirtlocaldir}"/{images,share}
-  sudo chown "${ACTUAL_USER}":libvirt-qemu "${libvirtlocaldir}/images"
-
-  if [ -f "${nsconf}" ] && ! grep -q "^hosts: .*libvirt" "${nsconf}"; then
-    print_info "Enabling access to VMs on un-isolated bridge network."
-    sudo sed -i "/^hosts/{s/files/files libvirt libvirt_guest/g}" "${nsconf}"
-  fi
-
-  print_info "Setting libvirt to use iptables (for UFW compatibility)."
-  sudo sed -i 's/^#\?firewall_backend = "nftables"/firewall_backend = "iptables"/g' "${libvirtnetworkconf}"
-
-  sudo systemctl enable libvirtd
-  sudo systemctl start libvirtd
 }
 
 # print_info "installing kvm"
