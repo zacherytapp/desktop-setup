@@ -48,7 +48,7 @@ function configure_kvantum_theme {
 function configure_grub_theme {
   cd ${ACTUAL_HOME}
   git clone https://github.com/vinceliuice/grub2-themes.git
-  cd grub2-themes && sudo ./install.sh -b -t tela
+  cd grub2-themes && sudo ./install.sh -b -t stylish -s 2k
   sudo grub-mkconfig -o /boot/grub/grub.cfg
 }
 
